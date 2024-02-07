@@ -23,13 +23,13 @@ class EventResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
-            'start_at' => $this->start_at,
-            'end_at' => $this->end_at,
+            'start_at' => $this->start_at->toAtomString(),
+            'end_at' => $this->end_at->toAtomString(),
             'recurrent' => $this->recurrent,
             'frequency' => $this->when($this->recurrent, $this->frequency),
-            'repeat_until' => $this->when($this->recurrent, $this->repeat_until),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'repeat_until' => $this->when($this->recurrent, $this->repeat_until?->toAtomString()),
+            'created_at' => $this->created_at->toAtomString(),
+            'updated_at' => $this->updated_at->toAtomString(),
             'events' => EventResource::collection($this->whenLoaded('events')),
         ];
     }

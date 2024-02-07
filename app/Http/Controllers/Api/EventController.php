@@ -11,6 +11,7 @@ use App\Http\Resources\EventResource;
 use App\Models\Event;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class EventController extends Controller
 {
@@ -30,7 +31,9 @@ class EventController extends Controller
      */
     public function store(EventRequest $request): JsonResponse
     {
-        return new JsonResponse();
+        $event = Event::create($request->all());
+
+        return (new EventResource($event))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 
     /**
@@ -46,14 +49,18 @@ class EventController extends Controller
      */
     public function update(EventRequest $request, Event $event): JsonResponse
     {
-        return new JsonResponse();
+        $event->update($request->all());
+
+        return (new EventResource($event))->response();
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Event $event): JsonResponse
+    public function destroy(Event $event): Response
     {
-        return new JsonResponse();
+        $event->delete();
+
+        return response(null, Response::HTTP_NO_CONTENT);
     }
 }

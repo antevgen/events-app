@@ -24,7 +24,7 @@ class EventFactory extends Factory
         $endAt = $this->faker->dateTimeBetween($startAt, Carbon::create($startAt)->endOfDay());
 
         return [
-            'title' => $this->faker->title(),
+            'title' => $this->faker->realText(50),
             'description' => $this->faker->optional()->text(),
             'start_at' => $startAt,
             'end_at' => $endAt,

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\RecurrentFrequency;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class EventRequest extends FormRequest
 {
@@ -13,7 +15,7 @@ class EventRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,8 +26,18 @@ class EventRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:50',
-            'description' => 'string|max:255',
+            'title' => 'bail|required|string|max:50',
+            'description' => 'bail|string|max:255',
+            'start_at' => 'bail|required|date_format:'.\DateTime::ATOM,
+            'end_at' => 'bail|required|date_format:'.\DateTime::ATOM.'|after:start_at',
+            'recurrent' => 'bail|required|boolean',
+            'frequency' => [
+                'bail',
+                'exclude_unless:recurrent,true',
+                'required',
+                Rule::enum(RecurrentFrequency::class),
+            ],
+            'repeat_until' => 'bail|exclude_unless:recurrent,true|required|date_format:'.\DateTime::ATOM.'|after:end_at',
         ];
     }
 }
