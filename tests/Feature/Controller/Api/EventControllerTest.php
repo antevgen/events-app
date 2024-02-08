@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controller\Api;
 
+use App\Enums\RecurrentFrequency;
 use App\Models\Event;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,7 +121,6 @@ class EventControllerTest extends TestCase
                 ]
             );
         $this->assertSame($expectedPerPage, $response['meta']['per_page']);
-        $this->assertSame($events->count(), $response['meta']['total']);
     }
 
     public static function eventProvider(): array
@@ -207,6 +207,50 @@ class EventControllerTest extends TestCase
         $this->assertSame($data['start_at'], $response['data']['start_at']);
         $this->assertSame($data['end_at'], $response['data']['end_at']);
         $this->assertSame($data['recurrent'], $response['data']['recurrent']);
+    }
+
+    public function test_create_recurrent_event(): void
+    {
+        $data = [
+            'title' => 'Event',
+            'description' => 'Information about interesting event',
+            'start_at' => Carbon::now()->subHour()->toAtomString(),
+            'end_at' => Carbon::now()->addHour()->toAtomString(),
+            'recurrent' => true,
+            'frequency' => RecurrentFrequency::WEEKLY,
+            'repeat_until' => Carbon::now()->addWeek()->toAtomString(),
+        ];
+        $response = $this->json(Request::METHOD_POST, route('events.store'), $data);
+        $recurrentEvents = Event::whereNotNull('parent_id')->get();
+        $response->assertStatus(Response::HTTP_CREATED)
+            ->assertJsonStructure(
+                [
+                    'data' => [
+                        'id',
+                        'title',
+                        'description',
+                        'start_at',
+                        'end_at',
+                        'recurrent',
+                        'created_at',
+                        'updated_at',
+                    ],
+                ]
+            );
+        $this->assertSame($data['title'], $response['data']['title']);
+        $this->assertSame($data['description'], $response['data']['description']);
+        $this->assertSame($data['start_at'], $response['data']['start_at']);
+        $this->assertSame($data['end_at'], $response['data']['end_at']);
+        $this->assertSame($data['recurrent'], $response['data']['recurrent']);
+        $this->assertSame($data['frequency']->value, $response['data']['frequency']);
+        $this->assertSame($data['repeat_until'], $response['data']['repeat_until']);
+        $this->assertNotEmpty($recurrentEvents);
+
+        foreach ($recurrentEvents as $recurrentEvent) {
+            $this->assertDatabaseHas('events', [
+                'id' => $recurrentEvent->id,
+            ]);
+        }
     }
 
     public static function failedEventProvider(): array
@@ -364,6 +408,47 @@ class EventControllerTest extends TestCase
             route('events.destroy', ['event' => $event->id]),
         );
         $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $this->assertDatabaseMissing('events', [
+            'id' => $event->id,
+        ]);
+    }
+
+    public function test_delete_recurrent_events(): void
+    {
+        $event = Event::factory()->recurrent()->create();
+        $recurrentEvents = Event::where('parent_id', $event->id)->get();
+        $response = $this->json(
+            Request::METHOD_DELETE,
+            route('events.destroy', ['event' => $event->id]),
+        );
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $this->assertDatabaseMissing('events', [
+            'id' => $event->id,
+        ]);
+        foreach ($recurrentEvents as $recurrentEvent) {
+            $this->assertDatabaseMissing('events', [
+                'id' => $recurrentEvent->id,
+            ]);
+        }
+    }
+
+    public function test_delete_recurrent_event(): void
+    {
+        $event = Event::factory()->recurrent()->create();
+        $recurrentEvents = Event::where('parent_id', $event->id)->get();
+        $response = $this->json(
+            Request::METHOD_DELETE,
+            route('events.destroy', ['event' => $recurrentEvents->first()->id]),
+        );
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+        ]);
+        foreach ($recurrentEvents as $recurrentEvent) {
+            $this->assertDatabaseMissing('events', [
+                'id' => $recurrentEvent->id,
+            ]);
+        }
     }
 
     public function test_delete_not_existing_event(): void

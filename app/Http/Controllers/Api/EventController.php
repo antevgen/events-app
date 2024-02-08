@@ -41,7 +41,7 @@ class EventController extends Controller
      */
     public function show(Event $event): JsonResponse
     {
-        return (new EventResource($event))->response();
+        return (new EventResource($event->load('events')))->response();
     }
 
     /**
