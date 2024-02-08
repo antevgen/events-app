@@ -8,7 +8,7 @@ use App\Events\EventCreated;
 use App\Events\EventDeleting;
 use App\Events\EventUpdated;
 use App\Models\Event;
-use App\Service\RecurrentEvent;
+use App\Services\RecurrentEvent;
 use Illuminate\Events\Dispatcher;
 
 class EventSubscriber
