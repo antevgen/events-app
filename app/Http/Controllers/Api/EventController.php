@@ -10,7 +10,8 @@ use App\Http\Resources\EventCollection;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 use Symfony\Component\HttpFoundation\Response;
 
 class EventController extends Controller
@@ -18,10 +19,16 @@ class EventController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(): JsonResponse
     {
-        $itemsPerPage = $request->get('per_page', 10);
-        $events = Event::paginate($itemsPerPage)->withQueryString();
+        $events = QueryBuilder::for(Event::class)
+            ->allowedFilters([
+                AllowedFilter::scope('starts_after'),
+                AllowedFilter::scope('ends_before'),
+            ])
+            ->allowedSorts('starts_at')
+            ->jsonPaginate()
+            ->appends(request()->query());
 
         return (new EventCollection($events))->response();
     }

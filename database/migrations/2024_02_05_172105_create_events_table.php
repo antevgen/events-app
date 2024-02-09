@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title', 50);
             $table->string('description')->nullable();
-            $table->dateTimeTz('start_at');
-            $table->dateTimeTz('end_at');
+            $table->dateTimeTz('starts_at');
+            $table->dateTimeTz('ends_at');
             $table->boolean('recurrent');
             $table->enum('frequency', RecurrentFrequency::values())->nullable();
             $table->dateTimeTz('repeat_until')->nullable();
@@ -28,7 +28,7 @@ return new class extends Migration
                 ->constrained('events')
                 ->cascadeOnDelete();
 
-            $table->index(['start_at', 'end_at']);
+            $table->index(['starts_at', 'ends_at']);
         });
     }
 

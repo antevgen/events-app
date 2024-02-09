@@ -21,8 +21,8 @@ class RecurrentEvent
         }
 
         $rule = new Rule();
-        $rule->setStartDate($event->start_at);
-        $rule->setEndDate($event->end_at);
+        $rule->setStartDate($event->starts_at);
+        $rule->setEndDate($event->ends_at);
         $rule->setFreq(Str::upper($event->frequency));
         $rule->setUntil($event->repeat_until);
 
@@ -43,8 +43,8 @@ class RecurrentEvent
             $recurrentEvent->fill([
                 'title' => $event->title,
                 'description' => $event->description,
-                'start_at' => Carbon::parse($nextOccurrence->getStart())->toAtomString(),
-                'end_at' => Carbon::parse($nextOccurrence->getEnd())->toAtomString(),
+                'starts_at' => Carbon::parse($nextOccurrence->getStart())->toAtomString(),
+                'ends_at' => Carbon::parse($nextOccurrence->getEnd())->toAtomString(),
                 'recurrent' => $event->recurrent,
                 'frequency' => $event->frequency,
                 'repeat_until' => $event->repeat_until,

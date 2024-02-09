@@ -7,6 +7,7 @@ namespace Tests\Feature\Controller\Api;
 use App\Enums\RecurrentFrequency;
 use App\Models\Event;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,8 +27,8 @@ class EventControllerTest extends TestCase
                     'id',
                     'title',
                     'description',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                     'recurrent',
                     'created_at',
                     'updated_at',
@@ -41,8 +42,8 @@ class EventControllerTest extends TestCase
                     'id',
                     'title',
                     'description',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                     'recurrent',
                     'frequency',
                     'repeat_until',
@@ -58,13 +59,13 @@ class EventControllerTest extends TestCase
                     'id',
                     'title',
                     'description',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                     'recurrent',
                     'created_at',
                     'updated_at',
                 ],
-                ['per_page' => 15],
+                ['page[size]' => 15],
                 15,
             ],
             [
@@ -73,15 +74,36 @@ class EventControllerTest extends TestCase
                     'id',
                     'title',
                     'description',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                     'recurrent',
                     'frequency',
                     'repeat_until',
                     'created_at',
                     'updated_at',
                 ],
-                ['per_page' => 15],
+                ['page[size]' => 15],
+                15,
+            ],
+            [
+                true,
+                [
+                    'id',
+                    'title',
+                    'description',
+                    'starts_at',
+                    'ends_at',
+                    'recurrent',
+                    'frequency',
+                    'repeat_until',
+                    'created_at',
+                    'updated_at',
+                ],
+                [
+                    'page[size]' => 15,
+                    'filter[starts_after]' => Carbon::now()->startOfHour()->addDay()->toAtomString(),
+                    'filter[ends_before]' => Carbon::now()->startOfHour()->addDays(2)->toAtomString(),
+                ],
                 15,
             ],
         ];
@@ -95,7 +117,23 @@ class EventControllerTest extends TestCase
         int $expectedPerPage,
     ): void {
         $events = Event::factory(10);
-        $events = $isRecurrent ? $events->recurrent()->create() : $events->create();
+        $events = $isRecurrent
+            ? $events->recurrent()
+                ->state(new Sequence(
+                    fn (Sequence $sequence) => [
+                        'starts_at' => Carbon::now()->startOfHour()->addHours($sequence->index + 1)->toAtomString(),
+                        'ends_at' => Carbon::now()->endOfHour()->addHours($sequence->index + 1)->toAtomString(),
+                        'frequency' => 'daily',
+                        'repeat_until' => Carbon::now()->endOfHour()->addDays($sequence->index + 1)->toAtomString(),
+                    ],
+                ))
+                ->create()
+            : $events->create(new Sequence(
+                fn (Sequence $sequence) => [
+                    'starts_at' => Carbon::now()->startOfHour()->addHours($sequence->index + 1)->toAtomString(),
+                    'ends_at' => Carbon::now()->endOfHour()->addHours($sequence->index + 1)->toAtomString(),
+                ],
+            ));
         $response = $this->get(route('events.index', $parameters));
         $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(
@@ -121,6 +159,12 @@ class EventControllerTest extends TestCase
                 ]
             );
         $this->assertSame($expectedPerPage, $response['meta']['per_page']);
+        if (count($parameters) > 1) {
+            foreach ($response['data'] as $result) {
+                $this->assertGreaterThan($parameters['filter[starts_after]'], $result['ends_at']);
+                $this->assertLessThan($parameters['filter[ends_before]'], $result['starts_at']);
+            }
+        }
     }
 
     public static function eventProvider(): array
@@ -132,8 +176,8 @@ class EventControllerTest extends TestCase
                     'id',
                     'title',
                     'description',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                     'recurrent',
                     'created_at',
                     'updated_at',
@@ -146,8 +190,8 @@ class EventControllerTest extends TestCase
                     'id',
                     'title',
                     'description',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                     'recurrent',
                     'frequency',
                     'repeat_until',
@@ -182,8 +226,8 @@ class EventControllerTest extends TestCase
         $data = [
             'title' => 'Event',
             'description' => 'Information about interesting event',
-            'start_at' => Carbon::now()->subHour()->toAtomString(),
-            'end_at' => Carbon::now()->addHour()->toAtomString(),
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
             'recurrent' => false,
         ];
         $response = $this->json(Request::METHOD_POST, route('events.store'), $data);
@@ -194,8 +238,8 @@ class EventControllerTest extends TestCase
                         'id',
                         'title',
                         'description',
-                        'start_at',
-                        'end_at',
+                        'starts_at',
+                        'ends_at',
                         'recurrent',
                         'created_at',
                         'updated_at',
@@ -204,8 +248,8 @@ class EventControllerTest extends TestCase
             );
         $this->assertSame($data['title'], $response['data']['title']);
         $this->assertSame($data['description'], $response['data']['description']);
-        $this->assertSame($data['start_at'], $response['data']['start_at']);
-        $this->assertSame($data['end_at'], $response['data']['end_at']);
+        $this->assertSame($data['starts_at'], $response['data']['starts_at']);
+        $this->assertSame($data['ends_at'], $response['data']['ends_at']);
         $this->assertSame($data['recurrent'], $response['data']['recurrent']);
     }
 
@@ -214,8 +258,8 @@ class EventControllerTest extends TestCase
         $data = [
             'title' => 'Event',
             'description' => 'Information about interesting event',
-            'start_at' => Carbon::now()->subHour()->toAtomString(),
-            'end_at' => Carbon::now()->addHour()->toAtomString(),
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
             'recurrent' => true,
             'frequency' => RecurrentFrequency::WEEKLY,
             'repeat_until' => Carbon::now()->addWeek()->toAtomString(),
@@ -229,8 +273,8 @@ class EventControllerTest extends TestCase
                         'id',
                         'title',
                         'description',
-                        'start_at',
-                        'end_at',
+                        'starts_at',
+                        'ends_at',
                         'recurrent',
                         'created_at',
                         'updated_at',
@@ -239,8 +283,8 @@ class EventControllerTest extends TestCase
             );
         $this->assertSame($data['title'], $response['data']['title']);
         $this->assertSame($data['description'], $response['data']['description']);
-        $this->assertSame($data['start_at'], $response['data']['start_at']);
-        $this->assertSame($data['end_at'], $response['data']['end_at']);
+        $this->assertSame($data['starts_at'], $response['data']['starts_at']);
+        $this->assertSame($data['ends_at'], $response['data']['ends_at']);
         $this->assertSame($data['recurrent'], $response['data']['recurrent']);
         $this->assertSame($data['frequency']->value, $response['data']['frequency']);
         $this->assertSame($data['repeat_until'], $response['data']['repeat_until']);
@@ -260,8 +304,8 @@ class EventControllerTest extends TestCase
                 [],
                 [
                     'title',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                     'recurrent',
                 ],
             ],
@@ -269,26 +313,26 @@ class EventControllerTest extends TestCase
                 [
                     'title' => 1,
                     'description' => 2,
-                    'start_at' => Carbon::now()->toDateTimeImmutable(),
-                    'end_at' => Carbon::now()->toDateTimeImmutable(),
+                    'starts_at' => Carbon::now()->toDateTimeImmutable(),
+                    'ends_at' => Carbon::now()->toDateTimeImmutable(),
                     'recurrent' => false,
                 ],
                 [
                     'title',
                     'description',
-                    'start_at',
-                    'end_at',
+                    'starts_at',
+                    'ends_at',
                 ],
             ],
             [
                 [
                     'title' => 'title',
-                    'start_at' => Carbon::now()->startOfHour()->toAtomString(),
-                    'end_at' => Carbon::now()->startOfHour()->toAtomString(),
+                    'starts_at' => Carbon::now()->startOfHour()->toAtomString(),
+                    'ends_at' => Carbon::now()->startOfHour()->toAtomString(),
                     'recurrent' => true,
                 ],
                 [
-                    'end_at',
+                    'ends_at',
                     'frequency',
                     'repeat_until',
                 ],
@@ -296,8 +340,8 @@ class EventControllerTest extends TestCase
             [
                 [
                     'title' => 'title',
-                    'start_at' => Carbon::now()->startOfHour()->toAtomString(),
-                    'end_at' => Carbon::now()->endOfHour()->toAtomString(),
+                    'starts_at' => Carbon::now()->startOfHour()->toAtomString(),
+                    'ends_at' => Carbon::now()->endOfHour()->toAtomString(),
                     'recurrent' => true,
                     'frequency' => 'bi-weekly',
                     'repeat_until' => Carbon::now()->endOfHour()->toAtomString(),
@@ -328,8 +372,8 @@ class EventControllerTest extends TestCase
         $data = [
             'title' => 'Event',
             'description' => 'Information about interesting event',
-            'start_at' => Carbon::now()->subHour()->toAtomString(),
-            'end_at' => Carbon::now()->addHour()->toAtomString(),
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
             'recurrent' => false,
         ];
         $response = $this->json(
@@ -344,8 +388,8 @@ class EventControllerTest extends TestCase
                         'id',
                         'title',
                         'description',
-                        'start_at',
-                        'end_at',
+                        'starts_at',
+                        'ends_at',
                         'recurrent',
                         'created_at',
                         'updated_at',
@@ -354,8 +398,8 @@ class EventControllerTest extends TestCase
             );
         $this->assertSame($data['title'], $response['data']['title']);
         $this->assertSame($data['description'], $response['data']['description']);
-        $this->assertSame($data['start_at'], $response['data']['start_at']);
-        $this->assertSame($data['end_at'], $response['data']['end_at']);
+        $this->assertSame($data['starts_at'], $response['data']['starts_at']);
+        $this->assertSame($data['ends_at'], $response['data']['ends_at']);
         $this->assertSame($data['recurrent'], $response['data']['recurrent']);
     }
 
@@ -381,8 +425,8 @@ class EventControllerTest extends TestCase
         $data = [
             'title' => 'Event',
             'description' => 'Information about interesting event',
-            'start_at' => Carbon::now()->subHour()->toAtomString(),
-            'end_at' => Carbon::now()->addHour()->toAtomString(),
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
             'recurrent' => false,
         ];
 

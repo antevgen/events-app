@@ -28,8 +28,8 @@ class EventRequest extends FormRequest
         return [
             'title' => 'bail|required|string|max:50',
             'description' => 'bail|string|max:255',
-            'start_at' => 'bail|required|date_format:'.\DateTime::ATOM,
-            'end_at' => 'bail|required|date_format:'.\DateTime::ATOM.'|after:start_at',
+            'starts_at' => 'bail|required|date_format:'.\DateTime::ATOM,
+            'ends_at' => 'bail|required|date_format:'.\DateTime::ATOM.'|after:starts_at',
             'recurrent' => 'bail|required|boolean',
             'frequency' => [
                 'bail',
@@ -37,7 +37,7 @@ class EventRequest extends FormRequest
                 'required',
                 Rule::enum(RecurrentFrequency::class),
             ],
-            'repeat_until' => 'bail|exclude_unless:recurrent,true|required|date_format:'.\DateTime::ATOM.'|after:end_at',
+            'repeat_until' => 'bail|exclude_unless:recurrent,true|required|date_format:'.\DateTime::ATOM.'|after:ends_at',
         ];
     }
 }
