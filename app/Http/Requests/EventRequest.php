@@ -37,7 +37,7 @@ class EventRequest extends FormRequest
     {
         return [
             'title' => 'bail|required|string|max:50',
-            'description' => 'bail|string|max:255',
+            'description' => 'bail|nullable|string|max:255',
             'starts_at' => 'bail|required|date_format:'.\DateTime::ATOM,
             'ends_at' => 'bail|required|date_format:'.\DateTime::ATOM.'|after:starts_at',
             'recurrent' => 'bail|required|boolean',
@@ -89,8 +89,25 @@ class EventRequest extends FormRequest
 
     private function isTimeOverlaps(string $startAt, string $endsAt): bool
     {
-        return Event::startsAfter($startAt)
-            ->endsBefore($endsAt)
+        $query = Event::startsAfter($startAt)
+            ->endsBefore($endsAt);
+
+        /** @var ?Event $requestedEvent */
+        $requestedEvent = request()->route()?->parameter('event');
+        if ($requestedEvent) {
+            $excludedEvents = match (true) {
+                $requestedEvent->events()->exists() => $requestedEvent->events()->get()
+                    ->add($requestedEvent)->pluck('id'),
+                ($requestedEvent->event !== null) => $requestedEvent->event->events()
+                    ->startsAfter((string) $requestedEvent->starts_at)
+                    ->pluck('id'),
+                default => [],
+            };
+
+            $query->whereNotIn('id', $excludedEvents);
+        }
+
+        return $query
             ->exists();
     }
 }

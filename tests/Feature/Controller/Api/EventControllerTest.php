@@ -276,6 +276,8 @@ class EventControllerTest extends TestCase
                         'starts_at',
                         'ends_at',
                         'recurrent',
+                        'frequency',
+                        'repeat_until',
                         'created_at',
                         'updated_at',
                     ],
@@ -426,6 +428,220 @@ class EventControllerTest extends TestCase
         $this->assertSame($data['starts_at'], $response['data']['starts_at']);
         $this->assertSame($data['ends_at'], $response['data']['ends_at']);
         $this->assertSame($data['recurrent'], $response['data']['recurrent']);
+    }
+
+    public function test_update_recurrent_event_to_non_recurrent(): void
+    {
+        $event = Event::factory()->recurrent()->create();
+        $data = [
+            'title' => 'Event',
+            'description' => 'Information about interesting event',
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
+            'recurrent' => false,
+        ];
+        $response = $this->json(
+            Request::METHOD_PUT,
+            route('events.update', ['event' => $event->id]),
+            $data,
+        );
+        $recurrentEvents = Event::whereNotNull('parent_id')->get();
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(
+                [
+                    'data' => [
+                        'id',
+                        'title',
+                        'description',
+                        'starts_at',
+                        'ends_at',
+                        'recurrent',
+                        'created_at',
+                        'updated_at',
+                    ],
+                ]
+            );
+        $this->assertSame($data['title'], $response['data']['title']);
+        $this->assertSame($data['description'], $response['data']['description']);
+        $this->assertSame($data['starts_at'], $response['data']['starts_at']);
+        $this->assertSame($data['ends_at'], $response['data']['ends_at']);
+        $this->assertSame($data['recurrent'], $response['data']['recurrent']);
+        $this->assertEmpty($recurrentEvents);
+    }
+
+    public function test_update_non_recurrent_event_to_recurrent(): void
+    {
+        $event = Event::factory()->create();
+        $data = [
+            'title' => 'Event',
+            'description' => 'Information about interesting event',
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
+            'recurrent' => true,
+            'frequency' => 'daily',
+            'repeat_until' => Carbon::now()->addDay()->toAtomString(),
+        ];
+        $response = $this->json(
+            Request::METHOD_PUT,
+            route('events.update', ['event' => $event->id]),
+            $data,
+        );
+        $recurrentEvents = Event::whereNotNull('parent_id')->get();
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(
+                [
+                    'data' => [
+                        'id',
+                        'title',
+                        'description',
+                        'starts_at',
+                        'ends_at',
+                        'recurrent',
+                        'frequency',
+                        'repeat_until',
+                        'created_at',
+                        'updated_at',
+                    ],
+                ]
+            );
+        $this->assertSame($data['title'], $response['data']['title']);
+        $this->assertSame($data['description'], $response['data']['description']);
+        $this->assertSame($data['starts_at'], $response['data']['starts_at']);
+        $this->assertSame($data['ends_at'], $response['data']['ends_at']);
+        $this->assertSame($data['recurrent'], $response['data']['recurrent']);
+        $this->assertSame($data['frequency'], $response['data']['frequency']);
+        $this->assertSame($data['repeat_until'], $response['data']['repeat_until']);
+        $this->assertNotEmpty($recurrentEvents);
+
+        foreach ($recurrentEvents as $recurrentEvent) {
+            $this->assertDatabaseHas('events', [
+                'id' => $recurrentEvent->id,
+            ]);
+        }
+    }
+
+    public function test_update_parent_recurrent_event(): void
+    {
+        $event = Event::factory()->recurrent()->create();
+        $data = [
+            'title' => 'Event',
+            'description' => 'Information about interesting event',
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
+            'recurrent' => true,
+            'frequency' => 'daily',
+            'repeat_until' => Carbon::now()->addDay()->toAtomString(),
+        ];
+        $response = $this->json(
+            Request::METHOD_PUT,
+            route('events.update', ['event' => $event->id]),
+            $data,
+        );
+        $recurrentEvents = Event::whereNotNull('parent_id')->get();
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(
+                [
+                    'data' => [
+                        'id',
+                        'title',
+                        'description',
+                        'starts_at',
+                        'ends_at',
+                        'recurrent',
+                        'frequency',
+                        'repeat_until',
+                        'created_at',
+                        'updated_at',
+                    ],
+                ]
+            );
+        $this->assertSame($data['title'], $response['data']['title']);
+        $this->assertSame($data['description'], $response['data']['description']);
+        $this->assertSame($data['starts_at'], $response['data']['starts_at']);
+        $this->assertSame($data['ends_at'], $response['data']['ends_at']);
+        $this->assertSame($data['recurrent'], $response['data']['recurrent']);
+        $this->assertSame($data['frequency'], $response['data']['frequency']);
+        $this->assertSame($data['repeat_until'], $response['data']['repeat_until']);
+        $this->assertNotEmpty($recurrentEvents);
+
+        foreach ($recurrentEvents as $index => $recurrentEvent) {
+            $this->assertDatabaseHas('events', [
+                'id' => $recurrentEvent->id,
+            ]);
+            $this->assertSame(
+                $recurrentEvent->starts_at->toAtomString(),
+                Carbon::parse($response['data']['starts_at'])->addDays($index + 1)->toAtomString()
+            );
+            $this->assertSame(
+                $recurrentEvent->ends_at->toAtomString(),
+                Carbon::parse($response['data']['ends_at'])->addDays($index + 1)->toAtomString()
+            );
+        }
+    }
+
+    public function test_update_child_recurrent_event(): void
+    {
+        $event = Event::factory()->recurrent()->create();
+        $data = [
+            'title' => 'Event',
+            'description' => 'Information about interesting event',
+            'starts_at' => Carbon::now()->subHour()->toAtomString(),
+            'ends_at' => Carbon::now()->addHour()->toAtomString(),
+            'recurrent' => true,
+            'frequency' => 'daily',
+            'repeat_until' => Carbon::now()->addDay()->toAtomString(),
+        ];
+        $recurrentEvents = Event::where('parent_id', $event->id)->get();
+        $response = $this->json(
+            Request::METHOD_PUT,
+            route('events.update', ['event' => $recurrentEvents->first()->id]),
+            $data,
+        );
+        $newRecurrentEvents = Event::where('parent_id', $recurrentEvents->first()->id)->get();
+        $oldParentEvent = Event::find($event->id);
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(
+                [
+                    'data' => [
+                        'id',
+                        'title',
+                        'description',
+                        'starts_at',
+                        'ends_at',
+                        'recurrent',
+                        'frequency',
+                        'repeat_until',
+                        'created_at',
+                        'updated_at',
+                    ],
+                ]
+            );
+        $this->assertSame($data['title'], $response['data']['title']);
+        $this->assertSame($data['description'], $response['data']['description']);
+        $this->assertSame($data['starts_at'], $response['data']['starts_at']);
+        $this->assertSame($data['ends_at'], $response['data']['ends_at']);
+        $this->assertSame($data['recurrent'], $response['data']['recurrent']);
+        $this->assertSame($data['frequency'], $response['data']['frequency']);
+        $this->assertSame($data['repeat_until'], $response['data']['repeat_until']);
+        $this->assertNotEmpty($recurrentEvents);
+        $this->assertSame($oldParentEvent->title, $event->title);
+        $this->assertSame($oldParentEvent->description, $event->description);
+        $this->assertSame($oldParentEvent->starts_at->toAtomString(), $event->starts_at->toAtomString());
+        $this->assertSame($oldParentEvent->ends_at->toAtomString(), $event->ends_at->toAtomString());
+        $this->assertSame($oldParentEvent->recurrent, $event->recurrent);
+        $this->assertSame($oldParentEvent->frequency, $event->frequency);
+        $this->assertSame($oldParentEvent->repeat_until->toAtomString(), $event->repeat_until->toAtomString());
+
+        foreach ($newRecurrentEvents as $index => $recurrentEvent) {
+            $this->assertSame(
+                $recurrentEvent->starts_at->toAtomString(),
+                Carbon::parse($response['data']['starts_at'])->addDays($index + 1)->toAtomString()
+            );
+            $this->assertSame(
+                $recurrentEvent->ends_at->toAtomString(),
+                Carbon::parse($response['data']['ends_at'])->addDays($index + 1)->toAtomString()
+            );
+        }
     }
 
     #[DataProvider('failedEventProvider')]

@@ -31,21 +31,51 @@ class EventSubscriber
     public function handleEventUpdated(EventUpdated $event): void
     {
         $eventModel = $event->getEvent();
+        if ($eventModel->events()->exists()) {
+            $eventModel->events()->delete();
+            $this->handleEventCreated(new EventCreated($eventModel));
+        }
+
+        if ($eventModel->event) {
+            $childEvents = $eventModel->event->events()
+                ->startsAfter((string) $eventModel->getOriginal('starts_at'))
+                ->whereNot('id', $eventModel->id)
+                ->get();
+
+            $eventModel->parent_id = null;
+            $eventModel->saveQuietly();
+            $this->handleEventCreated(new EventCreated($eventModel));
+
+            $childEvents->each(function (Event $childEvent) {
+                $childEvent->delete();
+            });
+        }
+
+        if ($eventModel->wasChanged('recurrent')) {
+            match ($eventModel->recurrent) {
+                true => $this->handleEventCreated(new EventCreated($eventModel)),
+                false => $eventModel->events()->exists()
+                    ? $eventModel->events()->delete()
+                    : (static function () use ($eventModel) {
+                        $parentEvent = $eventModel->event;
+                        $eventModel->parent_id = null;
+                        $eventModel->saveQuietly();
+                        $parentEvent->delete();
+                    }),
+            };
+        }
     }
 
     public function handleEventDeleting(EventDeleting $event): void
     {
         $eventModel = $event->getEvent();
-        $events = match (true) {
-            $eventModel->events()->exists() => $eventModel->events()
-                ->pluck('id'),
+        match (true) {
+            $eventModel->events()->exists() => $eventModel->events()->delete(),
             ($eventModel->event !== null) => $eventModel->event->events()
                 ->startsAfter((string) $eventModel->starts_at)
-                ->pluck('id'),
-            default => [],
+                ->delete(),
+            default => null,
         };
-
-        Event::whereIn('id', $events)->delete();
     }
 
     /**
