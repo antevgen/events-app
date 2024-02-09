@@ -351,12 +351,37 @@ class EventControllerTest extends TestCase
                     'repeat_until',
                 ],
             ],
+            [
+                [
+                    'title' => 'Event with overlap period',
+                    'starts_at' => Carbon::now()->startOfHour()->toAtomString(),
+                    'ends_at' => Carbon::now()->endOfHour()->toAtomString(),
+                    'recurrent' => true,
+                    'frequency' => 'daily',
+                    'repeat_until' => Carbon::now()->addDay()->toAtomString(),
+                ],
+                [
+                    'overlap',
+                ],
+                true,
+            ],
         ];
     }
 
     #[DataProvider('failedEventProvider')]
-    public function test_failed_create_event(array $data, array $errorList): void
-    {
+    public function test_failed_create_event(
+        array $data,
+        array $errorList,
+        bool $isExistingOverlapEvent = false,
+    ): void {
+        if ($isExistingOverlapEvent) {
+            Event::factory()->create(new Sequence(
+                fn (Sequence $sequence) => [
+                    'starts_at' => Carbon::now()->startOfHour()->toAtomString(),
+                    'ends_at' => Carbon::now()->endOfHour()->toAtomString(),
+                ],
+            ));
+        }
         $response = $this->json(Request::METHOD_POST, route('events.store'), $data);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertJsonStructure(
@@ -404,9 +429,20 @@ class EventControllerTest extends TestCase
     }
 
     #[DataProvider('failedEventProvider')]
-    public function test_failed_update_event(array $data, array $errorList): void
-    {
+    public function test_failed_update_event(
+        array $data,
+        array $errorList,
+        bool $isExistingOverlapEvent = false,
+    ): void {
         $event = Event::factory()->create();
+        if ($isExistingOverlapEvent) {
+            $event = Event::factory()->create(new Sequence(
+                fn (Sequence $sequence) => [
+                    'starts_at' => Carbon::now()->startOfHour()->toAtomString(),
+                    'ends_at' => Carbon::now()->endOfHour()->toAtomString(),
+                ],
+            ));
+        }
         $response = $this->json(
             Request::METHOD_PUT,
             route('events.update', ['event' => $event->id]),

@@ -37,8 +37,11 @@ class EventSubscriber
     {
         $eventModel = $event->getEvent();
         $events = match (true) {
-            $eventModel->events()->exists() => $eventModel->events()->pluck('id'),
-            ($eventModel->event !== null) => $eventModel->event->events()->startsAfter($eventModel->starts_at)->pluck('id'),
+            $eventModel->events()->exists() => $eventModel->events()
+                ->pluck('id'),
+            ($eventModel->event !== null) => $eventModel->event->events()
+                ->startsAfter((string) $eventModel->starts_at)
+                ->pluck('id'),
             default => [],
         };
 

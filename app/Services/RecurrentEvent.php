@@ -14,10 +14,10 @@ use Recurr\Transformer\ArrayTransformer;
 
 class RecurrentEvent
 {
-    public function getNextOccurrences(Event $event): array
+    public function getNextOccurrences(Event $event): Collection
     {
         if (! $event->recurrent) {
-            return [];
+            return new ArrayCollection();
         }
 
         $rule = new Rule();
@@ -26,14 +26,12 @@ class RecurrentEvent
         $rule->setFreq(Str::upper($event->frequency));
         $rule->setUntil($event->repeat_until);
 
-        $transformer = new ArrayTransformer();
-
-        return $transformer->transform($rule)->slice(1);
+        return (new ArrayTransformer())->transform($rule);
     }
 
     public function getNextEvents(Event $event): Collection
     {
-        $nextOccurrences = $this->getNextOccurrences($event);
+        $nextOccurrences = $this->getNextOccurrences($event)->slice(1);
 
         /** @var ArrayCollection<Event> $events */
         $events = new ArrayCollection();

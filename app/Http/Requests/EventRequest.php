@@ -5,11 +5,21 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\RecurrentFrequency;
+use App\Models\Event;
+use App\Services\RecurrentEvent;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
+use Recurr\Recurrence;
 
 class EventRequest extends FormRequest
 {
+    public function __construct(private RecurrentEvent $recurrentEvent)
+    {
+        parent::__construct();
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -39,5 +49,48 @@ class EventRequest extends FormRequest
             ],
             'repeat_until' => 'bail|exclude_unless:recurrent,true|required|date_format:'.\DateTime::ATOM.'|after:ends_at',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if (count($validator->failed())) {
+                return;
+            }
+
+            $eventModel = new Event();
+            $event = $eventModel->fill($validator->getData());
+
+            $periods = $this->recurrentEvent->getNextOccurrences($event);
+
+            if ($periods->isEmpty()) {
+                $recurrence = new Recurrence(
+                    Carbon::parse($event->starts_at)->toDateTimeImmutable(),
+                    Carbon::parse($event->ends_at)->toDateTimeImmutable(),
+                );
+                $periods = collect([$recurrence]);
+            }
+
+            /** @var Recurrence $recurrence */
+            foreach ($periods as $recurrence) {
+                if (
+                    $this->isTimeOverlaps(
+                        $recurrence->getStart()->format(\DateTime::ATOM),
+                        $recurrence->getEnd()->format(\DateTime::ATOM),
+                    )
+                ) {
+                    $validator->errors()->add('overlap', 'Event period should not overlap existing events.');
+
+                    return;
+                }
+            }
+        });
+    }
+
+    private function isTimeOverlaps(string $startAt, string $endsAt): bool
+    {
+        return Event::startsAfter($startAt)
+            ->endsBefore($endsAt)
+            ->exists();
     }
 }
