@@ -39,8 +39,8 @@ class EventFactory extends Factory
             $frequency = $frequencies[random_int(0, count($frequencies) - 1)];
             $interval = RecurrentFrequency::from($frequency)->interval();
             $repeatUntil = $this->faker->dateTimeBetween(
-                Carbon::parse($attributes['ends_at'])->add($interval, 1),
-                Carbon::parse($attributes['ends_at'])->add($interval, random_int(2, 10)),
+                Carbon::parse($attributes['ends_at'])->add($interval, 2),
+                Carbon::parse($attributes['ends_at'])->add($interval, random_int(3, 10)),
             );
 
             return [
