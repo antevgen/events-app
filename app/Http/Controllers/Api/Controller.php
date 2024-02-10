@@ -12,7 +12,7 @@ use OpenApi\Attributes as OA;
     title: 'Recurrent events api documentation',
 )]
 #[OA\Server(
-    url: 'http://events-app.local:8080/api',
+    url: 'http://recurrent-events-app.local:8080/api',
     description: 'Recurrent events app server',
 )]
 class Controller

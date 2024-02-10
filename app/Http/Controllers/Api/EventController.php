@@ -135,6 +135,7 @@ class EventController extends Controller
                             property: 'frequency',
                             description: 'Recurrent frequency',
                             type: 'string',
+                            default: null,
                             enum: [
                                 'daily',
                                 'weekly',
@@ -147,8 +148,8 @@ class EventController extends Controller
                             property: 'repeat_until',
                             description: 'Repeat recurrent event until',
                             type: 'string',
+                            default: null,
                             pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}$',
-                            example: '2024-01-10T22:00:00+00:00',
                             nullable: true,
                         ),
                     ]
@@ -245,6 +246,7 @@ class EventController extends Controller
                             property: 'frequency',
                             description: 'Recurrent frequency',
                             type: 'string',
+                            default: null,
                             enum: [
                                 'daily',
                                 'weekly',
@@ -257,8 +259,8 @@ class EventController extends Controller
                             property: 'repeat_until',
                             description: 'Repeat recurrent event until',
                             type: 'string',
+                            default: null,
                             pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}$',
-                            example: '2024-01-10T22:00:00+00:00',
                             nullable: true,
                         ),
                     ]

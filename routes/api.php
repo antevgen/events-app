@@ -15,3 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::apiResource('events', EventController::class);
+
+Route::get('health', static function () {
+    return ['status' => 'OK'];
+});

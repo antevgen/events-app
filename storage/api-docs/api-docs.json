@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://events-app.local:8080/api",
+            "url": "http://recurrent-events-app.local:8080/api",
             "description": "Recurrent events app server"
         }
     ],
@@ -114,6 +114,7 @@
                                     "frequency": {
                                         "description": "Recurrent frequency",
                                         "type": "string",
+                                        "default": null,
                                         "enum": [
                                             "daily",
                                             "weekly",
@@ -125,8 +126,8 @@
                                     "repeat_until": {
                                         "description": "Repeat recurrent event until",
                                         "type": "string",
+                                        "default": null,
                                         "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
-                                        "example": "2024-01-10T22:00:00+00:00",
                                         "nullable": true
                                     }
                                 },
@@ -240,6 +241,7 @@
                                     "frequency": {
                                         "description": "Recurrent frequency",
                                         "type": "string",
+                                        "default": null,
                                         "enum": [
                                             "daily",
                                             "weekly",
@@ -251,8 +253,8 @@
                                     "repeat_until": {
                                         "description": "Repeat recurrent event until",
                                         "type": "string",
+                                        "default": null,
                                         "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
-                                        "example": "2024-01-10T22:00:00+00:00",
                                         "nullable": true
                                     }
                                 },
