@@ -1,0 +1,319 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Recurrent events api documentation",
+        "description": "Recurrent events api",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://events-app.local:8080/api",
+            "description": "Recurrent events app server"
+        }
+    ],
+    "paths": {
+        "/events": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "List all events",
+                "operationId": "3befe2e8582683a8dc70f7b706a5a97d",
+                "parameters": [
+                    {
+                        "name": "filter[starts_after]",
+                        "in": "query",
+                        "description": "Show events that happened after datetime",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                            "example": "2024-01-10T10:00:00+00:00"
+                        }
+                    },
+                    {
+                        "name": "filter[ends_before]",
+                        "in": "query",
+                        "description": "Show events that happened before datetime",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                            "example": "2024-01-10T17:00:00+00:00"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort on field(s). Format is `field` to sort in ascending order, `-field` to sort in descending order",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "-id",
+                                "starts_at",
+                                "-starts_at",
+                                "ends_at",
+                                "-ends_at"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of events"
+                    },
+                    "401": {
+                        "description": "Unauthorized access"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Create an Event",
+                "operationId": "1ed79d9ab6d41b87387cad6237213e5d",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "description": "Event name",
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "nullable": false
+                                    },
+                                    "description": {
+                                        "description": "Event description",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "starts_at": {
+                                        "description": "Event start time",
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                                        "example": "2024-01-10T10:00:00+00:00",
+                                        "nullable": false
+                                    },
+                                    "ends_at": {
+                                        "description": "Event end time",
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                                        "example": "2024-01-10T17:00:00+00:00",
+                                        "nullable": false
+                                    },
+                                    "recurrent": {
+                                        "description": "Is recurrent event",
+                                        "type": "boolean",
+                                        "default": false,
+                                        "nullable": false
+                                    },
+                                    "frequency": {
+                                        "description": "Recurrent frequency",
+                                        "type": "string",
+                                        "enum": [
+                                            "daily",
+                                            "weekly",
+                                            "monthly",
+                                            "yearly"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "repeat_until": {
+                                        "description": "Repeat recurrent event until",
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                                        "example": "2024-01-10T22:00:00+00:00",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Event successfully created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                }
+            }
+        },
+        "/events/{id}": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Display the specified event",
+                "operationId": "abf4f4bbfe75221b5bab720a701f17b8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event details"
+                    },
+                    "404": {
+                        "description": "Event was not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized access"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Update the specified Event",
+                "operationId": "ca1f19a988fe9b1ee4af2f4ff3e724fe",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "description": "Event name",
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "nullable": false
+                                    },
+                                    "description": {
+                                        "description": "Event description",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "starts_at": {
+                                        "description": "Event start time",
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                                        "example": "2024-01-10T10:00:00+00:00",
+                                        "nullable": false
+                                    },
+                                    "ends_at": {
+                                        "description": "Event end time",
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                                        "example": "2024-01-10T17:00:00+00:00",
+                                        "nullable": false
+                                    },
+                                    "recurrent": {
+                                        "description": "Is recurrent event",
+                                        "type": "boolean",
+                                        "default": false,
+                                        "nullable": false
+                                    },
+                                    "frequency": {
+                                        "description": "Recurrent frequency",
+                                        "type": "string",
+                                        "enum": [
+                                            "daily",
+                                            "weekly",
+                                            "monthly",
+                                            "yearly"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "repeat_until": {
+                                        "description": "Repeat recurrent event until",
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}$",
+                                        "example": "2024-01-10T22:00:00+00:00",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event successfully updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Delete the specified event",
+                "operationId": "54be98df9381a8b89013d29e170a31fe",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Event ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful operation"
+                    },
+                    "404": {
+                        "description": "Event was not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized access"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Events",
+            "description": "API Endpoints of Events"
+        }
+    ]
+}
