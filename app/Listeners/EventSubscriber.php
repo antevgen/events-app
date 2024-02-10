@@ -24,7 +24,11 @@ class EventSubscriber
 
         if (! $eventModel->event()->exists()) {
             $recurrentEvents = $this->recurrentEvent->getNextEvents($eventModel);
-            $eventModel->events()->saveMany($recurrentEvents);
+            foreach ($recurrentEvents as $recurrentEventAttributes) {
+                $recurrentEvent = new Event();
+                $recurrentEvent->fill($recurrentEventAttributes);
+                $eventModel->events()->save($recurrentEvent);
+            }
         }
     }
 

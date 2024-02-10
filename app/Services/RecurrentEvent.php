@@ -32,13 +32,10 @@ class RecurrentEvent
     public function getNextEvents(Event $event): Collection
     {
         $nextOccurrences = $this->getNextOccurrences($event)->slice(1);
-
-        /** @var ArrayCollection<Event> $events */
         $events = new ArrayCollection();
 
         foreach ($nextOccurrences as $nextOccurrence) {
-            $recurrentEvent = new Event();
-            $recurrentEvent->fill([
+            $recurrentEvent = [
                 'title' => $event->title,
                 'description' => $event->description,
                 'starts_at' => Carbon::parse($nextOccurrence->getStart())->toAtomString(),
@@ -47,8 +44,8 @@ class RecurrentEvent
                 'frequency' => $event->frequency,
                 'repeat_until' => $event->repeat_until,
                 'parent_id' => $event->id,
-            ]);
-            $events[] = $recurrentEvent;
+            ];
+            $events->add($recurrentEvent);
         }
 
         return $events;
