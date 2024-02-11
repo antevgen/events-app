@@ -30,7 +30,7 @@ class EventResource extends JsonResource
             'repeat_until' => $this->when($this->recurrent, $this->repeat_until?->toAtomString()),
             'created_at' => $this->created_at->toAtomString(),
             'updated_at' => $this->updated_at->toAtomString(),
-            'events' => EventResource::collection($this->whenLoaded('events')),
+            'parent' => $this->when($this->parent_id !== null, $this->event),
         ];
     }
 }

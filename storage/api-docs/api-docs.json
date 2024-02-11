@@ -41,6 +41,14 @@
                         }
                     },
                     {
+                        "name": "filter[parent_id]",
+                        "in": "query",
+                        "description": "Show child events of parent one",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
                         "name": "sort",
                         "in": "query",
                         "description": "Sort on field(s). Format is `field` to sort in ascending order, `-field` to sort in descending order",

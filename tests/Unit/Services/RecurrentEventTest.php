@@ -96,7 +96,7 @@ class RecurrentEventTest extends TestCase
         $startTime = Carbon::now()->startOfHour();
         $endTime = Carbon::now()->endOfHour();
         $this->eventModel
-            ->expects($this->exactly(11))
+            ->expects($this->exactly(8))
             ->method('__get')
             ->willReturnMap([
                 ['recurrent', true],
@@ -107,8 +107,6 @@ class RecurrentEventTest extends TestCase
                 ['title', 'Recurrent event'],
                 ['description', null],
                 ['recurrent', true],
-                ['frequency', 'daily'],
-                ['repeat_until', Carbon::now()->addDay()],
                 ['id', 1],
             ]);
 
