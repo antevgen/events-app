@@ -35,9 +35,20 @@ class EventSubscriber
     public function handleEventUpdated(EventUpdated $event): void
     {
         $eventModel = $event->getEvent();
-        if ($eventModel->events()->exists()) {
+        if ($eventModel->events()->exists() && ! $eventModel->wasChanged('recurrent')) {
             $eventModel->events()->delete();
             $this->handleEventCreated(new EventCreated($eventModel));
+        }
+
+        if ($eventModel->wasChanged('recurrent')) {
+            match (true) {
+                $eventModel->recurrent => $this->handleEventCreated(new EventCreated($eventModel)),
+                $eventModel->events()->exists() => $eventModel->events()->delete(),
+                ($eventModel->event !== null) => $this->disableRecurrentChildEvent($eventModel),
+                default => null,
+            };
+
+            return;
         }
 
         if ($eventModel->event) {
@@ -54,20 +65,14 @@ class EventSubscriber
                 $childEvent->delete();
             });
         }
+    }
 
-        if ($eventModel->wasChanged('recurrent')) {
-            match ($eventModel->recurrent) {
-                true => $this->handleEventCreated(new EventCreated($eventModel)),
-                false => $eventModel->events()->exists()
-                    ? $eventModel->events()->delete()
-                    : (static function () use ($eventModel) {
-                        $parentEvent = $eventModel->event;
-                        $eventModel->parent_id = null;
-                        $eventModel->saveQuietly();
-                        $parentEvent->delete();
-                    }),
-            };
-        }
+    private function disableRecurrentChildEvent(Event $event)
+    {
+        $parentEvent = $event->event;
+        $event->parent_id = null;
+        $event->saveQuietly();
+        $parentEvent->delete();
     }
 
     public function handleEventDeleting(EventDeleting $event): void

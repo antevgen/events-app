@@ -156,7 +156,7 @@ class EventSubscriberTest extends TestCase
         $this->assertNull($recurrentEvents->get(1)->parent_id);
 
         $recurrentEvents->each(function (Event $recurrentEvent, $key) {
-            if ($key < 2) {
+            if ($key === 1) {
                 $this->assertDatabaseHas('events', ['id' => $recurrentEvent->id]);
             } else {
                 $this->assertDatabaseMissing('events', ['id' => $recurrentEvent->id]);

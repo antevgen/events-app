@@ -45,8 +45,6 @@ class EventControllerTest extends TestCase
                     'starts_at',
                     'ends_at',
                     'recurrent',
-                    'frequency',
-                    'repeat_until',
                     'created_at',
                     'updated_at',
                 ],
@@ -77,8 +75,6 @@ class EventControllerTest extends TestCase
                     'starts_at',
                     'ends_at',
                     'recurrent',
-                    'frequency',
-                    'repeat_until',
                     'created_at',
                     'updated_at',
                 ],
@@ -94,8 +90,6 @@ class EventControllerTest extends TestCase
                     'starts_at',
                     'ends_at',
                     'recurrent',
-                    'frequency',
-                    'repeat_until',
                     'created_at',
                     'updated_at',
                 ],
@@ -634,11 +628,11 @@ class EventControllerTest extends TestCase
 
         foreach ($newRecurrentEvents as $index => $recurrentEvent) {
             $this->assertSame(
-                $recurrentEvent->starts_at->toAtomString(),
+                Carbon::parse($recurrentEvent->starts_at)->toAtomString(),
                 Carbon::parse($response['data']['starts_at'])->addDays($index + 1)->toAtomString()
             );
             $this->assertSame(
-                $recurrentEvent->ends_at->toAtomString(),
+                Carbon::parse($recurrentEvent->ends_at)->toAtomString(),
                 Carbon::parse($response['data']['ends_at'])->addDays($index + 1)->toAtomString()
             );
         }

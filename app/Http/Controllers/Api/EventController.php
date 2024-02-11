@@ -195,7 +195,7 @@ class EventController extends Controller
     )]
     public function show(Event $event): JsonResponse
     {
-        return (new EventResource($event->load('events')))->response();
+        return (new EventResource($event->load('event')))->response();
     }
 
     #[OA\Put(

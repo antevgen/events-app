@@ -40,9 +40,7 @@ class RecurrentEvent
                 'description' => $event->description,
                 'starts_at' => Carbon::parse($nextOccurrence->getStart())->toAtomString(),
                 'ends_at' => Carbon::parse($nextOccurrence->getEnd())->toAtomString(),
-                'recurrent' => $event->recurrent,
-                'frequency' => $event->frequency,
-                'repeat_until' => $event->repeat_until,
+                'recurrent' => true,
                 'parent_id' => $event->id,
             ];
             $events->add($recurrentEvent);
