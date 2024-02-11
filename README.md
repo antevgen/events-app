@@ -137,3 +137,27 @@ Run tests
 ```shell
 ./vendor/bin/sail artisan test
 ```
+
+# XDEBUG
+
+To be able to run PhpUnit in the container make sure you have the container running.
+
+Then make sure you configure Docker:
+
+![](resources/docs/PHPstormDocker.png "PhpStorm configure Docker")
+
+Make sure you configure PHP with remote interpreter.
+
+![](resources/docs/PHPstormPHPsettings.png "Docker service tab")
+
+Then configure the PhpUnit interpreter.
+
+![](resources/docs/PHPStormPHPunit.png "PhpUnit interpreter")
+
+To enable Xdebug you have to set correct debug port: 9003 - Settings -> PHP -> XDEBUG
+
+![](resources/docs/PHPStormPHPXdebug.png "PHP Xdebug")
+
+Also need to configure server: Settings -> PHP -> Servers
+
+![](resources/docs/PHPStormPHPXdebugServers.png "PHP Servers")
