@@ -47,6 +47,14 @@ class EventController extends Controller
                 ),
             ),
             new OA\Parameter(
+                name: 'filter[parent_id]',
+                description: 'Show child events of parent one',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'integer',
+                ),
+            ),
+            new OA\Parameter(
                 name: 'sort',
                 description: 'Sort on field(s). Format is `field` to sort in ascending order, `-field` to sort in descending order',
                 in: 'query',
@@ -75,6 +83,7 @@ class EventController extends Controller
             ->allowedFilters([
                 AllowedFilter::scope('starts_after'),
                 AllowedFilter::scope('ends_before'),
+                AllowedFilter::exact('parent_id'),
             ])
             ->allowedSorts([
                 'starts_at',
