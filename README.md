@@ -14,7 +14,7 @@ Setup env:
 
 ```shell
 cp .env.example .env
-php artisan key:generate
+./vendor/bin/sail artisan key:generate
 ```
 
 Update hosts file:
